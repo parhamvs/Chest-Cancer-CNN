@@ -1,4 +1,3 @@
-
 # Import necessary libraries
 import os
 import numpy as np
@@ -9,6 +8,7 @@ import tensorflow_datasets as tfds
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.applications import VGG16
 from tensorflow.keras.utils import plot_model
 
 # Mount Google Drive
@@ -33,19 +33,15 @@ test_generator = test_datagen.flow_from_directory(
         batch_size=32,
         class_mode='categorical')
 
-# Display an image from the training data
-images, labels = train_generator.next()
-plt.imshow(images[31])
-plt.show()
+# Load the VGG16 model without the top layers (include_top=False)
+base_model = VGG16(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
 
-# Define the model architecture
+# Freeze the pre-trained layers so they are not trainable
+base_model.trainable = False
+
+# Add your own classification layers on top
 model = keras.Sequential([
-    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(64, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(128, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
+    base_model,
     layers.Flatten(),
     layers.Dense(128, activation='relu'),
     layers.Dense(4, activation='softmax')
